@@ -1,8 +1,8 @@
-from base import BaseBoard
+from .base import BaseBoard
 from core.models import ImageItem
 
 class Gelbooru(BaseBoard):
-    def __init__(self, api_key, user_id, proxy=None):
+    def __init__(self, api_key=None, user_id=None, proxy=None):
         super().__init__(api_key, user_id, proxy)
         self.base_url = "https://gelbooru.com/index.php?page=dapi&s=post&q=index"
 
@@ -21,19 +21,34 @@ class Gelbooru(BaseBoard):
             "api_key": self.api_key,
             "json": 1,
             "limit": limit,
-            "page": page
+            "pid": page
         }
+    
+    def _parse_json_list(self, json_data):
+        """
+        Gelbooru 的特殊处理：
+        它的 JSON 不是直接的列表，而是包裹在 "post" 键下面的。
+        """
+        # 1. 检查数据是不是字典 (盒子)
+        if isinstance(json_data, dict):
+            # 2. 尝试拿 "post" 里面的东西，如果拿不到就返回空列表
+            return json_data.get("post", [])
+        
+        # 3. 如果根本不是字典（比如是个空列表），直接返回空
+        return []
 
     def _get_count(self, response_json):
         # Gelbooru 特有的 count 获取逻辑 (你现在的逻辑)
         if "@attributes" in response_json:
-            return int(response_json["@attributes"]["count"])
+            count = int(response_json["@attributes"]["count"])
+            print(f"检索到 {count} 张图片")
+            return count
         return 0
 
     def _normalize_data(self, raw_post):
         # Gelbooru 特有的字段映射
         return ImageItem(
-            Id=raw_post.get("id"),
+            id=raw_post.get("id"),
             url=raw_post.get("file_url"),
             tags=raw_post.get("tags"),
             rating=raw_post.get("rating"),

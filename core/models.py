@@ -5,7 +5,7 @@ from typing import Optional
 @dataclass
 class ImageItem:
     # --- 1. 基础数据字段 ---
-    Id: int
+    id: int
     url: str
     rating: str
     tags: str
@@ -45,7 +45,7 @@ class ImageItem:
         生成标准文件名：ID + 后缀
         例如: 123456.jpg
         """
-        return f"{self.Id}{self.extension}"
+        return f"{self.id}{self.extension}"
 
     @property
     def is_video(self) -> bool:
@@ -66,7 +66,7 @@ class ImageItem:
         对应你 main.py 里 save_data 需要的格式
         """
         return {
-            "Id": self.Id,
+            "Id": self.id,
             "Posted": self.created_at,
             "Rating": self.rating,
             "Score": self.score,
