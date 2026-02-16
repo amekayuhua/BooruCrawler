@@ -18,5 +18,6 @@ venv/
 .venv/
 .env/
 config.py
+test.py
 
 # 5. (可选) 建议保留 .gitignore 本身，否则别人拉下来就没有这个规则了
