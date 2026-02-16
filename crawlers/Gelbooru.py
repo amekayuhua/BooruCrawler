@@ -1,10 +1,33 @@
 from .base import BaseBoard
 from core.models import ImageItem
+import re
 
 class Gelbooru(BaseBoard):
-    def __init__(self, api_key=None, user_id=None, proxy=None):
-        super().__init__(api_key, user_id, proxy)
+    def __init__(self, api_key=None, user_id=None, proxy=None, headers=None):
+        super().__init__(api_key, user_id, proxy, headers)
         self.base_url = "https://gelbooru.com/index.php?page=dapi&s=post&q=index"
+        
+    @staticmethod
+    def get_safe_tag_name(tags: str) -> str:
+        if not tags:
+            return ""
+
+        # 1. 统一转小写
+        safe_name = tags.lower().strip()
+
+        # 2. Gelbooru 特有方言处理
+        safe_name = safe_name.replace(' ', '_')
+        safe_name = safe_name.replace('*', '').replace('?', '')
+
+        # 4. 美化 (去重下划线，去首尾点符号)
+        safe_name = re.sub(r'_+', '_', safe_name)
+        safe_name = safe_name.strip(' ._')
+
+        # 5. 长度截断 (防止文件名溢出)
+        if len(safe_name) > 100:
+            safe_name = safe_name[:100]
+
+        return safe_name
 
     def _get_sort_string(self, sort_by, desc):
         if not sort_by:

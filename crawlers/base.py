@@ -14,6 +14,14 @@ class BaseBoard(ABC):
         self.proxy = proxy
         self.headers = headers
         self.base_url = ""
+    
+    @abstractmethod
+    def get_safe_tag_name(self, tags: str) -> str:
+        """
+        子类必须实现：
+        根据本站点的搜索语法特性，将 tags 清洗为合法的文件系统名称。
+        """
+        pass
         
     @abstractmethod
     def _get_sort_string(self, sort_by, desc) -> str:
@@ -29,8 +37,8 @@ class BaseBoard(ABC):
         """
         tags_list = []
 
-        if base_tags: tags_list.append(base_tags)
         if artist:    tags_list.append(artist)
+        if base_tags: tags_list.append(base_tags)
         if rating:    tags_list.append(f"rating:{rating}")
         
         # 留给子类去处理 unique 的部分

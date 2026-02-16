@@ -1,14 +1,14 @@
 import pandas as pd
 import os
-from typing import List
+from typing import List, Type
 from .models import ImageItem
 
 class DataManager:
-    def __init__(self, file_path: str, full_tags: list) -> None:
+    def __init__(self, file_path: str, artist: str, tags: str) -> None:
         self.file_path = file_path
         self.existing_ids = set()
-        self.artist = full_tags[0]
-        self.tags = full_tags[1]
+        self.artist = artist
+        self.tags = tags
 
     def makeup_filepath(self):
         if self.artist:
@@ -40,7 +40,7 @@ class DataManager:
         if not image_items:
             return
         
-        new_items_to_save = []
+        new_items_to_save: List[ImageItem] = []
         
         for item in image_items:
             # 必须转成 str 对比，因为 load_existing_ids 里存的是 str
@@ -53,12 +53,12 @@ class DataManager:
         
         # --- 2. 如果过滤完没剩下东西，直接返回 ---
         if not new_items_to_save:
-            print("没有新数据需要写入")
+            print("没有新数据需要写入。")
             return
 
         # --- 3. 转换 & 保存 ---
         # 只转换“新”数据，节省性能
-        datalist = [item.to_dict() for item in new_items_to_save]
+        datalist = [item.to_dict(artist=self.artist) for item in new_items_to_save]
         df = pd.DataFrame(datalist)
         
         # 检查文件是否存在（决定是否写表头）
