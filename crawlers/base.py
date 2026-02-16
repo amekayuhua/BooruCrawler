@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import config
 from core.models import ImageItem
 import requests
 import time
@@ -10,10 +9,10 @@ class BaseBoard(ABC):
     MAX_LIMIT = 100
     
     def __init__(self, api_key=None, user_id=None, proxy=None, headers=None):
-        self.api_key = api_key if api_key else config.API.get("api_key")
-        self.user_id = user_id if user_id else config.API.get("user_id")
-        self.proxy = proxy if proxy else config.PROXY
-        self.headers = headers if headers else config.HEADERS
+        self.api_key = api_key
+        self.user_id = user_id
+        self.proxy = proxy
+        self.headers = headers
         self.base_url = ""
         
     @abstractmethod

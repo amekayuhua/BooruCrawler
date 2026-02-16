@@ -20,14 +20,32 @@ class CrawlerFActory:
         return crawler_type(api_key=config.API["api_key"], user_id=config.API["user_id"])
     
 def main():
+    # 网站接口
+    api_url = config.API_URL
+    header = config.HEADERS
+    user_id = config.API["user_id"]
+    api_key = config.API["api_key"]
+    
+    # 关键词
+    base_tags = config.SEARCH_TAGS
+    artist = config.ARTIST_NAME
+    full_tags = config.FULL_TAGS
+    rating = config.RATING
+    sort_by = config.SORT_BY
+    desc = config.DESCENDING
+    
+    # 文件位置
+    data_output_path = config.DATA_OUTPUT_PATH
+    image_output_path = config.IMAGES_OUTPUT_PATH
+    
     crawler = CrawlerFActory.get_crwaler(config.SITE)
-    data_manager = DataManager()
+    data_manager = DataManager(file_path=data_output_path, full_tags=full_tags)
 
-    final_tags = crawler.assemble_tags(base_tags=config.SEARCH_TAGS,
-                                       artist=config.ARTIST_NAME,
-                                       rating=config.RATING,
-                                       sort_by=config.SORT_BY,
-                                       desc=config.DESCENDING
+    final_tags = crawler.assemble_tags(base_tags=base_tags,
+                                       artist=artist,
+                                       rating=rating,
+                                       sort_by=sort_by,
+                                       desc=desc
                                        )
     
     print(f"正在检索关键词: {final_tags} ...")

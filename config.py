@@ -13,6 +13,11 @@ ARTIST_NAME = 'cian_yo'
 
 SEARCH_TAGS = ''
 
+FULL_TAGS = [
+    ARTIST_NAME,
+    SEARCH_TAGS
+]
+
 API = {
     'user_id': 1914481,
     'api_key': '295b1d7020cd90cf84cbe41a81e38b607a2ef866183ba59eca647bdc74661ced546d1b3e4e4f42d0c284f18d0098d8eb8a6778264ea32e49a0f0880d253a31a1'

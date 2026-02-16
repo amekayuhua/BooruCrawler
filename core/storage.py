@@ -2,19 +2,19 @@ import pandas as pd
 import os
 from typing import List
 from .models import ImageItem
-import config
 
 class DataManager:
-    def __init__(self, file_path=config.DATA_OUTPUT_PATH) -> None:
+    def __init__(self, file_path: str, full_tags: list) -> None:
         self.file_path = file_path
         self.existing_ids = set()
-        self.artist = config.ARTIST_NAME
+        self.artist = full_tags[0]
+        self.tags = full_tags[1]
 
     def makeup_filepath(self):
         if self.artist:
             filename_base = self.artist
         else:
-            filename_base = config.SEARCH_TAGS.replace(' ', '_')
+            filename_base = self.tags.replace(' ', '_')
             
         full_filename = f"{filename_base}.csv"
         self.file_path = os.path.join(self.file_path, full_filename)
