@@ -1,5 +1,6 @@
 from crawlers.base import BaseBoard
 from crawlers.Gelbooru import Gelbooru
+from crawlers.Danbooru import Danbooru
 from core.storage import DataManager
 from core.downloader import Downloader
 import config
@@ -9,7 +10,8 @@ from typing import Type
 
 class CrawlerFActory:
     CRAWLERS: dict[str, Type[BaseBoard]] = {
-        'gelbooru': Gelbooru
+        'gelbooru': Gelbooru,
+        "danbooru": Danbooru
     }
     
     @staticmethod
@@ -50,7 +52,7 @@ def main():
     final_tags = crawler.assemble_tags(base_tags=base_tags, artist=artist, rating=rating, sort_by=sort_by, desc=desc)
 
     print(f"正在检索关键词: {final_tags} ...")
-    total_count = crawler.get_total_count(final_tags) # 调用新方法
+    total_count = crawler.get_total_count(final_tags)
 
     if total_count:
         user_input = input("请输入想要获取的数量 (输入 'all' 下载全部): ")

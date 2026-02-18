@@ -68,29 +68,13 @@ class BaseBoard(ABC):
         """子类必须实现：把网站乱七八糟的 JSON 字段清洗成标准的 ImageItem"""
         pass
     
+    @abstractmethod
     def get_total_count(self, tags) -> int:
         """
         只负责发送探测包，返回搜索结果的总数量
         """
-        req_proxies = None
-        if self.proxy and isinstance(self.proxy, str):
-            req_proxies = {
-                "http": self.proxy,
-                "https": self.proxy
-            }
-        # 构造 limit=1 的探测参数
-        probe_params = self._build_params(tags, page=0, limit=1)
-        try:
-            # 发送请求
-            response = requests.get(self.base_url, params=probe_params, proxies=req_proxies, headers=self.headers, timeout=10)
-            response.raise_for_status()
-            
-            # 调用子类解析 count
-            return self._get_count(response.json())
-        except Exception as e:
-            print(f"请求失败: {e}")
-            return 0
-
+        pass
+    
     def fetch_posts(self, tags: str, limit_num: int) -> List[ImageItem]:
  
         images = []

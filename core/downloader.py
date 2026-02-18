@@ -8,10 +8,7 @@ from core.models import ImageItem
 
 class Downloader:
     def __init__(self, save_path, artist, tags, headers, proxy, semaphore_limit=5):
-        """
-        :param save_root: 图片保存的根目录 (例如 D:\...\images)
-        :param semaphore_limit: 并发数量限制，默认 5
-        """
+
         self.save_path = save_path
         self.semaphore = asyncio.Semaphore(semaphore_limit)
         
@@ -23,7 +20,6 @@ class Downloader:
             
         self.save_dir = os.path.join(self.save_path, self.sub_folder)
         
-        # 代理和Header设置 (从 config 读取，也可以做成参数传入)
         self.proxy = proxy
         self.headers = headers
 

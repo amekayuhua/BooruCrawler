@@ -14,6 +14,7 @@ class ImageItem:
     source: str = ""
     created_at: str = ""
     score: int = 0
+    site: str = ""
     
     # 扩展字段：有些网站 URL 里不带后缀，需要单独传进来，或者自动推导
     _extension: Optional[str] = field(default=None, repr=False)
@@ -62,7 +63,9 @@ class ImageItem:
         """
         row = {
             "Id": self.id,
+            "Site": self.site,
             "Posted": self.created_at,
+            "Artist": "Unknown",
             "Rating": self.rating,
             "Score": self.score,
             "Size": f"{self.width}x{self.height}",
