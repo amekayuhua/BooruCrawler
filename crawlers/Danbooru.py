@@ -6,7 +6,6 @@ import requests
 class Danbooru(BaseBoard):
     def __init__(self, api_key=None, user_id=None, proxy=None, headers=None):
         super().__init__(api_key, user_id, proxy, headers)
-        # Danbooru 的标准 API 地址
         self.base_url = "https://danbooru.donmai.us/posts.json"
 
     def get_safe_tag_name(self, tags: str) -> str:

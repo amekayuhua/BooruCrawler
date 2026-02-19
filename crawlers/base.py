@@ -2,6 +2,9 @@ from abc import ABC, abstractmethod
 from core.models import ImageItem
 import requests
 import time
+import aiohttp
+import asyncio
+import math
 from typing import List
 
 
@@ -75,64 +78,149 @@ class BaseBoard(ABC):
         """
         pass
     
-    def fetch_posts(self, tags: str, limit_num: int) -> List[ImageItem]:
+    # def fetch_posts(self, tags: str, limit_num: int) -> List[ImageItem]:
  
-        images = []
-        page = 0
-        target_count = limit_num  # 这里直接接收用户的最终决定
+    #     images = []
+    #     page = 0
+    #     target_count = limit_num  # 这里直接接收用户的最终决定
 
-        print(f"收到指令，准备下载 {target_count} 张图片元数据...")
+    #     print(f"收到指令，准备下载 {target_count} 张图片元数据...")
 
-        # 只要手里的图还没凑够，就继续循环
-        while len(images) < target_count:
+    #     # 只要手里的图还没凑够，就继续循环
+    #     while len(images) < target_count:
             
-            current_limit = self.MAX_LIMIT
-            params = self._build_params(tags, page, current_limit)
+    #         current_limit = self.MAX_LIMIT
+    #         params = self._build_params(tags, page, current_limit)
             
-            req_proxies = None
-            if self.proxy and isinstance(self.proxy, str):
-                req_proxies = {
-                    "http": self.proxy,
-                    "https": self.proxy
-                }
+    #         req_proxies = None
+    #         if self.proxy and isinstance(self.proxy, str):
+    #             req_proxies = {
+    #                 "http": self.proxy,
+    #                 "https": self.proxy
+    #             }
                 
+    #         try:
+    #             # 4.3 发请求
+    #             response = requests.get(self.base_url, params=params, headers=self.headers, proxies=req_proxies, timeout=10)
+                
+    #             if response.status_code != 200:
+    #                 print(f"[警告] 第 {page} 页请求失败，状态码: {response.status_code}")
+    #                 break # 遇到错就停，或者你可以写重试逻辑
+                
+    #             json_data = response.json()
+                
+    #             # 4.4 提取列表 (关键点！)
+    #             # Gelbooru 返回的是 {"post": [...]}, Danbooru 返回的是 [...]
+    #             # 我们需要一个新方法 _parse_json_list 来屏蔽这个差异
+    #             raw_posts = self._parse_json_list(json_data)
+                
+    #             if not raw_posts:
+    #                 print(f"第 {page} 页是空的，看来是到底了。")
+    #                 break
+                
+    #             # 4.5 清洗数据 (Raw Dict -> ImageItem)
+    #             for raw_post in raw_posts:
+    #                 # 调用子类的清洗逻辑
+    #                 item = self._normalize_data(raw_post)
+    #                 # 只有当 item 有效（比如有 url）时才收录
+    #                 if item:
+    #                     images.append(item)
+                
+    #             display_count = min(len(images), target_count)
+    #             print(f"  > 进度: {display_count} / {target_count}")
+
+    #             # 4.6 翻页 & 休息 (防封号)
+    #             page += 1
+    #             time.sleep(0.2) 
+                
+    #         except Exception as e:
+    #             print(f"[错误] 抓取过程中断: {e}")
+    #             break
+        
+    #     # 双重保险：虽然循环条件控制了，但返回前最好截断一下，确保不多不少
+    #     return images[:target_count]
+    
+    # --- 新增：单个页面异步抓取逻辑 ---
+    async def _fetch_page_async(self, session, tags, page, limit, semaphore):
+        """
+        协程：抓取单页数据
+        """
+        async with semaphore:  # 限制并发数
+            params = self._build_params(tags, page, limit)
+            # 处理代理 (aiohttp 使用字符串 proxy)
+            req_proxy = self.proxy if isinstance(self.proxy, str) else None
+            
             try:
-                # 4.3 发请求
-                response = requests.get(self.base_url, params=params, headers=self.headers, proxies=req_proxies, timeout=10)
-                
-                if response.status_code != 200:
-                    print(f"[警告] 第 {page} 页请求失败，状态码: {response.status_code}")
-                    break # 遇到错就停，或者你可以写重试逻辑
-                
-                json_data = response.json()
-                
-                # 4.4 提取列表 (关键点！)
-                # Gelbooru 返回的是 {"post": [...]}, Danbooru 返回的是 [...]
-                # 我们需要一个新方法 _parse_json_list 来屏蔽这个差异
-                raw_posts = self._parse_json_list(json_data)
-                
-                if not raw_posts:
-                    print(f"第 {page} 页是空的，看来是到底了。")
-                    break
-                
-                # 4.5 清洗数据 (Raw Dict -> ImageItem)
-                for raw_post in raw_posts:
-                    # 调用子类的清洗逻辑
-                    item = self._normalize_data(raw_post)
-                    # 只有当 item 有效（比如有 url）时才收录
-                    if item:
-                        images.append(item)
-                
-                display_count = min(len(images), target_count)
-                print(f"  > 进度: {display_count} / {target_count}")
-
-                # 4.6 翻页 & 休息 (防封号)
-                page += 1
-                time.sleep(0.2) 
+                timeout = aiohttp.ClientTimeout(total=20) # 设置超时
+                async with session.get(self.base_url, params=params, headers=self.headers, proxy=req_proxy, timeout=timeout, ssl=False) as response:
+                    if response.status != 200:
+                        print(f"[警告] 第 {page} 页请求失败，状态码: {response.status}")
+                        return []
+                    
+                    json_data = await response.json()
+                    raw_posts = self._parse_json_list(json_data)
+                    
+                    # 在这里进行清洗
+                    valid_items = []
+                    for raw_post in raw_posts:
+                        item = self._normalize_data(raw_post)
+                        if item:
+                            valid_items.append(item)
+                    
+                    print(f"第 {page} 页获取到 {len(valid_items)} 张有效元数据")
+                    await asyncio.sleep(0.5)
+                    return valid_items
                 
             except Exception as e:
-                print(f"[错误] 抓取过程中断: {e}")
-                break
+                print(f"[错误] 第 {page} 页发生异常: {e}")
+                return []
+
+    # --- 修改：主抓取入口 ---
+    async def _fetch_posts_core(self, tags: str, limit_num: int) -> List[ImageItem]:
+        """
+        异步批量获取元数据
+        """
+        target_count = limit_num
+        # 计算需要多少页 (向上取整)
+        # 例如需要 250 张，每页 100，则需要 ceil(2.5) = 3 页
+        total_pages = math.ceil(target_count / self.MAX_LIMIT)
         
-        # 双重保险：虽然循环条件控制了，但返回前最好截断一下，确保不多不少
-        return images[:target_count]
+        print(f"获取 {target_count} 张。预计并发请求 {total_pages} 页...")
+
+        # 限制并发数为 5 (防止 429 Too Many Requests)
+        semaphore = asyncio.Semaphore(5)
+        
+        all_items = []
+
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            for page in range(total_pages):
+                # 创建每一页的任务
+                task = asyncio.create_task(
+                    self._fetch_page_async(session, tags, page, self.MAX_LIMIT, semaphore)
+                )
+                tasks.append(task)
+            
+            # 等待所有页面抓取完成
+            results = await asyncio.gather(*tasks)
+            
+            # 展平结果列表 [[item1, item2], [item3]] -> [item1, item2, item3]
+            for page_items in results:
+                all_items.extend(page_items)
+
+        # 截取需要的数量
+        final_items = all_items[:target_count]
+        print(f"元数据抓取完成: 实际获得 {len(final_items)} 张图片的数据")
+        return final_items
+    
+    def start_crawling(self, tags: str, limit_num: int) -> List[ImageItem]:
+        """
+        [对外同步入口] 封装了 asyncio 的复杂性，供 run.py 直接调用
+        """
+        try:
+            # 正常运行
+            return asyncio.run(self._fetch_posts_core(tags, limit_num))
+        except RuntimeError:
+            # 兼容 Jupyter Notebook 或已有 EventLoop 的环境
+            loop = asyncio.get_event_loop()
+            return loop.run_until_complete(self._fetch_posts_core(tags, limit_num))

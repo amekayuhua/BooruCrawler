@@ -23,6 +23,7 @@ class CrawlerFActory:
         return crawler_type(api_key=config.API["api_key"], user_id=config.API["user_id"], headers=config.HEADERS, proxy=config.PROXY)
 
 def main():
+    # 导入配置 ------------------------------------------------------------------
     # 网站接口
     headers = config.HEADERS
     site = config.SITE
@@ -42,6 +43,8 @@ def main():
     # 保存选项
     save_data = config.SAVE_DATA
     download_images = config.DOWNLOAD_IMAGES
+    word_cloud = config.WORDCLOUD
+    # --------------------------------------------------------------------------
 
     # 实例化
     crawler = CrawlerFActory.get_crwaler(site=site)
@@ -51,12 +54,11 @@ def main():
 
     final_tags = crawler.assemble_tags(base_tags=base_tags, artist=artist, rating=rating, sort_by=sort_by, desc=desc)
 
-    print(f"正在检索关键词: {final_tags} ...")
+    print(f"正在检索关键词: {final_tags} ")
     total_count = crawler.get_total_count(final_tags)
 
     if total_count:
         user_input = input("请输入想要获取的数量 (输入 'all' 下载全部): ")
-
         if user_input.lower() == "all":
             final_limit = total_count
         else:
@@ -66,13 +68,19 @@ def main():
             print("取消下载。")
             return
 
-        image_items = crawler.fetch_posts(final_tags, final_limit)
+        # image_items = crawler.fetch_posts(final_tags, final_limit)
+        image_items = crawler.start_crawling(final_tags, final_limit)
 
         if save_data:
             data_manager.load_existing_ids()
             data_manager.save_as_csv(image_items)
+            data_manager.save_to_summary_csv(image_items)
+            if word_cloud:
+                data_manager.generate_wordcloud()
 
         if download_images:
             downloader.download(image_items)
 
+# 启动爬虫
 main()
+# python run.py
