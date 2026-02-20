@@ -15,6 +15,7 @@ class ImageItem:
     created_at: str = ""
     score: int = 0
     site: str = ""
+    artist: str = ""
     
     # 扩展字段：有些网站 URL 里不带后缀，需要单独传进来，或者自动推导
     _extension: Optional[str] = field(default=None, repr=False)
@@ -61,19 +62,18 @@ class ImageItem:
         导出为字典，用于保存 CSV
         对应你 main.py 里 save_data 需要的格式
         """
+        final_artist = self.artist or artist or "Unknown"
+        
         row = {
             "Id": self.id,
             "Site": self.site,
             "Posted": self.created_at,
-            "Artist": "Unknown",
+            "Artist": final_artist,
             "Rating": self.rating,
             "Score": self.score,
             "Size": f"{self.width}x{self.height}",
             "File_URL": self.url,
             "Tags": self.tags
         }
-        
-        if artist:
-            row["Artist"] = artist
         
         return row

@@ -5,7 +5,6 @@ from core.storage import DataManager
 from core.downloader import Downloader
 import config
 from typing import Type
-# from core.utils import
 
 
 class CrawlerFActory:
@@ -48,7 +47,9 @@ def main():
 
     # 实例化
     crawler = CrawlerFActory.get_crwaler(site=site)
+    # 清洗标签（根据本站点规则）
     tags = crawler.get_safe_tag_name(base_tags)
+    
     data_manager = DataManager(file_path=data_output_path, artist=artist, tags=tags)
     downloader = Downloader(save_path=image_output_path, artist=artist, tags=tags, headers=headers, proxy=proxy)
 
@@ -68,7 +69,6 @@ def main():
             print("取消下载。")
             return
 
-        # image_items = crawler.fetch_posts(final_tags, final_limit)
         image_items = crawler.start_crawling(final_tags, final_limit)
 
         if save_data:

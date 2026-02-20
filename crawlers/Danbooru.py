@@ -164,5 +164,6 @@ class Danbooru(BaseBoard):
             source=raw_post.get("source"),
             created_at=created_at, # 使用清洗后的时间
             score=raw_post.get("score"),
-            site="Danbooru"
+            site="Danbooru",
+            artist=raw_post.get("tag_string_artist", "")
         )

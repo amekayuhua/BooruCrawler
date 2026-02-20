@@ -6,6 +6,7 @@ from .utils import *
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 
+# 单次搜索文件和汇总数据文件的管理器类
 class DataManager:
     def __init__(self, file_path: str, artist: str, tags: str) -> None:
         self.file_path = file_path
