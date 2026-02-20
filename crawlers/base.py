@@ -18,6 +18,7 @@ class BaseBoard(ABC):
         self.headers = headers
         self.base_url = ""
     
+    # 在子类中应该是一个静态方法 只获取config.SEARCH_TAGS 放在不同的子类下实现不同的清洗逻辑
     @abstractmethod
     def get_safe_tag_name(self, tags: str) -> str:
         """
@@ -78,67 +79,6 @@ class BaseBoard(ABC):
         """
         pass
     
-    # def fetch_posts(self, tags: str, limit_num: int) -> List[ImageItem]:
- 
-    #     images = []
-    #     page = 0
-    #     target_count = limit_num  # 这里直接接收用户的最终决定
-
-    #     print(f"收到指令，准备下载 {target_count} 张图片元数据...")
-
-    #     # 只要手里的图还没凑够，就继续循环
-    #     while len(images) < target_count:
-            
-    #         current_limit = self.MAX_LIMIT
-    #         params = self._build_params(tags, page, current_limit)
-            
-    #         req_proxies = None
-    #         if self.proxy and isinstance(self.proxy, str):
-    #             req_proxies = {
-    #                 "http": self.proxy,
-    #                 "https": self.proxy
-    #             }
-                
-    #         try:
-    #             # 4.3 发请求
-    #             response = requests.get(self.base_url, params=params, headers=self.headers, proxies=req_proxies, timeout=10)
-                
-    #             if response.status_code != 200:
-    #                 print(f"[警告] 第 {page} 页请求失败，状态码: {response.status_code}")
-    #                 break # 遇到错就停，或者你可以写重试逻辑
-                
-    #             json_data = response.json()
-                
-    #             # 4.4 提取列表 (关键点！)
-    #             # Gelbooru 返回的是 {"post": [...]}, Danbooru 返回的是 [...]
-    #             # 我们需要一个新方法 _parse_json_list 来屏蔽这个差异
-    #             raw_posts = self._parse_json_list(json_data)
-                
-    #             if not raw_posts:
-    #                 print(f"第 {page} 页是空的，看来是到底了。")
-    #                 break
-                
-    #             # 4.5 清洗数据 (Raw Dict -> ImageItem)
-    #             for raw_post in raw_posts:
-    #                 # 调用子类的清洗逻辑
-    #                 item = self._normalize_data(raw_post)
-    #                 # 只有当 item 有效（比如有 url）时才收录
-    #                 if item:
-    #                     images.append(item)
-                
-    #             display_count = min(len(images), target_count)
-    #             print(f"  > 进度: {display_count} / {target_count}")
-
-    #             # 4.6 翻页 & 休息 (防封号)
-    #             page += 1
-    #             time.sleep(0.2) 
-                
-    #         except Exception as e:
-    #             print(f"[错误] 抓取过程中断: {e}")
-    #             break
-        
-    #     # 双重保险：虽然循环条件控制了，但返回前最好截断一下，确保不多不少
-    #     return images[:target_count]
     
     # --- 新增：单个页面异步抓取逻辑 ---
     async def _fetch_page_async(self, session, tags, page, limit, semaphore):

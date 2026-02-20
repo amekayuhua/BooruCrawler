@@ -66,8 +66,11 @@ class Gelbooru(BaseBoard):
         # Gelbooru 特有的 count 获取逻辑 (你现在的逻辑)
         if "@attributes" in response_json:
             count = int(response_json["@attributes"]["count"])
-            print(f"检索到 {count} 张图片")
-            return count
+            if count != 0:
+                print(f"检索到 {count} 张图片")
+                return count
+            else:
+                print("未检索到图片")
         return 0
     
     def get_total_count(self, tags) -> int:

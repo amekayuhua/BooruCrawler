@@ -13,9 +13,10 @@ class DataManager:
         self.existing_ids = set()
         self.artist = artist
         self.tags = tags
+
         
 
-    def makeup_filepath(self):
+    def _makeup_filepath(self):
         if self.artist:
             filename_base = self.artist
         else:
@@ -24,11 +25,11 @@ class DataManager:
         full_filename = f"{filename_base}.csv"
         self.file_path = os.path.join(self.file_path, full_filename)
         
-    def load_existing_ids(self, file_path=None):
+    def _load_existing_ids(self, file_path=None):
         """
         读取 CSV 中的 ID 用于去重。
         :param file_path: (可选) 指定要读取的文件路径。
-                          如果不填，则默认读取 makeup_filepath 生成的路径。
+                          如果不填，则默认读取 _makeup_filepath 生成的路径。
         """
         # 1. 确定目标路径
         if file_path:
@@ -36,7 +37,7 @@ class DataManager:
             # 如果是读取新文件，建议清空当前的 set，防止混淆
             self.existing_ids = set()
         else:
-            self.makeup_filepath()
+            self._makeup_filepath()
             target_path = self.file_path
         
         # 2. 如果文件不存在，直接返回（existing_ids 保持为空）
@@ -58,7 +59,8 @@ class DataManager:
         if not image_items:
             return
         
-        # 此时 self.existing_ids 应该是 load_existing_ids() 加载的单人数据
+        self._load_existing_ids()
+        # 此时 self.existing_ids 应该是 _load_existing_ids() 加载的单人数据
         new_items_to_save: List[ImageItem] = []
         
         for item in image_items:
@@ -72,7 +74,9 @@ class DataManager:
             return
 
         # 写入文件
-        self._write_to_csv(new_items_to_save, self.file_path)
+        else:
+            self._write_to_csv(new_items_to_save, self.file_path)
+            print(f"写入 {len(new_items_to_save)} 条数据到画师/标签表 {self.file_path}")
 
     def save_to_summary_csv(self, image_items: List[ImageItem]) -> None:
         """
@@ -89,7 +93,7 @@ class DataManager:
 
         # 2. 复用 load_existing_ids 读取总表的 ID
         # 注意：这会重置 self.existing_ids 为总表的 ID 集合
-        self.load_existing_ids(file_path=summary_path)
+        self._load_existing_ids(file_path=summary_path)
         
         # 3. 筛选在总表中不存在的数据
         new_items_for_summary = []
@@ -105,7 +109,7 @@ class DataManager:
             return
 
         # 4. 写入总表
-        print(f"正在追加 {len(new_items_for_summary)} 条数据到汇总表...")
+        print(f"写入 {len(new_items_for_summary)} 条数据到汇总表...")
         self._write_to_csv(new_items_for_summary, summary_path)
 
     def _write_to_csv(self, items: List[ImageItem], path: str):
