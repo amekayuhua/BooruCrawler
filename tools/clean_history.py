@@ -8,14 +8,14 @@ from core.roster import ArtistRoster
 
 # ================= 配置区域 =================
 # 配置你的名单 txt 和 汇总数据 csv 的路径
-ROSTER_PATH = r"D:\pyworks\BooruCrawler\output\datasets"
+ROSTER_PATH = r"D:\pyworks\BooruCrawler\output\datasets\artists_roster.txt"
 CSV_PATH = r"D:\pyworks\BooruCrawler\output\datasets\datas.csv"
 # ==========================================
 
 def run_cleaner():
     print("启动历史数据清洗工具...")
     
-    # 1. 实例化花名册 (此时它会自动加载本地 txt 里的名字)
+    # 1. 实例化名册 (此时它会自动加载本地 txt 里的名字)
     roster = ArtistRoster(filepath=ROSTER_PATH)
     
     print(f"当前画师知识库已收录 {len(roster.artists)} 位画师。")

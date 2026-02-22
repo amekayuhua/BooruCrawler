@@ -4,7 +4,7 @@ from crawlers.Danbooru import Danbooru
 from core.storage import DataManager
 from core.downloader import Downloader
 from core.roster import ArtistRoster
-import os
+from core.database import DBManager
 import config
 from typing import Type
 
@@ -40,10 +40,12 @@ def main():
     # 文件位置
     data_output_path = config.DATA_OUTPUT_PATH
     image_output_path = config.IMAGES_OUTPUT_PATH
+    database_path = config.DATABASE_PATH
 
     # 保存选项
     save_data = config.SAVE_DATA
     download_images = config.DOWNLOAD_IMAGES
+    database = config.DATABASE
     word_cloud = config.WORDCLOUD
     # --------------------------------------------------------------------------
 
@@ -64,7 +66,8 @@ def main():
     if total_count:
         roster_path = data_output_path + rf"\artists_roster.txt"
         roster = ArtistRoster(filepath=roster_path)
-        roster.add(artist)
+        if artist:
+            roster.add(artist)
 
         user_input = input("请输入想要获取的数量 (输入 'all' 下载全部): ")
         if user_input.lower() == "all":
@@ -87,6 +90,10 @@ def main():
             data_manager.save_to_summary_csv(image_items)
             if word_cloud:
                 data_manager.generate_wordcloud()
+                
+        if database:
+            db_manager = DBManager(database_path)
+            db_manager.save_items(image_items)
 
         if download_images:
             downloader.download(image_items)
