@@ -38,9 +38,9 @@ class Danbooru(BaseBoard):
         # 处理别名，防止 config 里写错了
         if sort_by == "updated": return "order:id" # 默认就是 id 倒序
         
-        # 如果用户只写了 score，补全为 order:score
+        # 如果用户只写了 score，补全为 order:score:desc
         if not sort_by.startswith("order:"):
-            return f"order:{sort_by}"
+            return f"order:{sort_by}:{desc}"
             
         return sort_by
 
