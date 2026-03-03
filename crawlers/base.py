@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
 from core.models import ImageItem
-# import requests
-# import time
 import aiohttp
 import asyncio
 import math
 from typing import List
-from tqdm import tqdm
 import logging 
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn, MofNCompleteColumn
+from core.log_config import console
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +71,7 @@ class BaseBoard(ABC):
         pass
     
     
-    async def _fetch_page_async(self, session, tags, page, limit, semaphore, pbar: tqdm):
+    async def _fetch_page_async(self, session, tags, page, limit, semaphore, progress, task_id):
         """协程：抓取单页数据"""
         async with semaphore:
             params = self._build_params(tags, page, limit)
@@ -104,7 +103,8 @@ class BaseBoard(ABC):
                 return []
             
             finally:
-                pbar.update(1)
+                # pbar.update(1)
+                progress.update(task_id, advance=1)
 
     async def _fetch_posts_core(self, tags: str, limit_num: int) -> List[ImageItem]:
         """异步批量获取元数据"""
@@ -120,12 +120,35 @@ class BaseBoard(ABC):
         async with aiohttp.ClientSession() as session:
             tasks = []
             
-            with tqdm(total=total_pages, desc="获取页面元数据", unit="页") as pbar:
+            with Progress(
+                TextColumn("        "),
+                SpinnerColumn(),
+                TextColumn("[cyan][progress.description]{task.description:<20}"),
+                BarColumn(),
+                MofNCompleteColumn(),
+                TaskProgressColumn(),
+                TimeRemainingColumn(),
+                console=console,
+                transient=False            
+            ) as progress:
+                
+                task_id = progress.add_task("正在抓取元数据...", total=total_pages)
+                
                 for page in range(total_pages):
                     task = asyncio.create_task(
-                        self._fetch_page_async(session, tags, page, self.MAX_LIMIT, semaphore, pbar)
+                        self._fetch_page_async(
+                            session, tags, page, self.MAX_LIMIT, 
+                            semaphore, progress, task_id
+                        )
                     )
                     tasks.append(task)
+            
+            # with tqdm(total=total_pages, desc="获取页面元数据", unit="页") as pbar:
+            #     for page in range(total_pages):
+            #         task = asyncio.create_task(
+            #             self._fetch_page_async(session, tags, page, self.MAX_LIMIT, semaphore, pbar)
+            #         )
+            #         tasks.append(task)
             
                 results = await asyncio.gather(*tasks)
             
@@ -133,7 +156,7 @@ class BaseBoard(ABC):
                 all_items.extend(page_items)
 
         final_items = all_items[:target_count]
-        logger.info(f"元数据获取完成: {len(final_items)}/{target_count} 张图片")
+        logger.info(f"元数据获取完成: {len(final_items)}/{target_count} 张图片/视频信息")
         return final_items
     
     def start_crawling(self, tags: str, limit_num: int) -> List[ImageItem]:

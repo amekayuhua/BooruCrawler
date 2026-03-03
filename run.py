@@ -1,5 +1,6 @@
+import config
 from core.log_config import setup_global_logger
-setup_global_logger()
+setup_global_logger(config.LOG_LEVEL)
 
 from crawlers.base import BaseBoard
 from crawlers.Gelbooru import Gelbooru
@@ -8,9 +9,10 @@ from core.storage import DataManager
 from core.downloader import Downloader
 from core.roster import ArtistRoster
 from core.database import DBManager
-import logging
-import config
 from typing import Type
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CrawlerFactory:
     CRAWLERS: dict[str, Type[BaseBoard]] = {
@@ -49,6 +51,7 @@ def main():
     # 保存选项
     save_data = config.SAVE_DATA
     download_images = config.DOWNLOAD_IMAGES
+    download_videos = config.DOWNLOAD_VIDEOS
     database = config.DATABASE
     word_cloud = config.WORDCLOUD
     # --------------------------------------------------------------------------
@@ -63,7 +66,7 @@ def main():
     data_manager = DataManager(file_path=data_output_path, artist=artist, tags=file_tags, stop_words=stop_words)
     downloader = Downloader(save_path=image_output_path, artist=artist, tags=file_tags, headers=headers, proxy=proxy)
 
-    logging.info(f"检索关键词: {final_tags}")
+    logger.info(f"检索关键词: {final_tags}")
     total_count = crawler.get_total_count(final_tags)
 
     if total_count:
@@ -73,17 +76,17 @@ def main():
             roster.add(artist)
 
         user_input = input("请输入想要获取的数量 (输入 'all' 下载全部): ")
-        logging.info(f"用户设定下载数量: {user_input}")
+        logger.info(f"用户设定下载数量: {user_input}")
         if user_input.lower() == "all":
             final_limit = total_count
         else:
             final_limit = min(int(user_input), total_count)
 
         if final_limit == 0:
-            logging.info("已取消下载")
+            logger.info("已取消下载")
             return
 
-        logging.info("启动爬虫获取数据")
+        logger.debug("启动爬虫获取数据")
         image_items = crawler.start_crawling(final_tags, final_limit)
 
         image_items = roster.assign_artists(image_items)
@@ -99,7 +102,7 @@ def main():
             db_manager.save_items(image_items)
 
         if download_images:
-            downloader.download(image_items)
+            downloader.download(image_items, download_videos)
 
 if __name__ == "__main__":
     main()

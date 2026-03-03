@@ -115,6 +115,9 @@ class DBManager:
             session.commit()
             if new_count > 0:
                 logger.info(f"成功保存 {new_count} 张新图片及其关系到数据库")
+                
+            else:
+                logger.info(f"该批次没有新图片及其关系需要保存到数据库")
             
         except Exception as e:
             session.rollback()

@@ -63,7 +63,7 @@ class Danbooru(BaseBoard):
         """从计数接口返回的数据中提取图片总数"""
         try:
             count = int(json_data.get("counts", {}).get("posts", 0))
-            logger.info(f"获取总数: {count} 张图片")
+            logger.info(f"获取总数: {count} 张图片/视频信息")
             return count
         except Exception as e:
             logger.error(f"解析总数失败: {e}")
@@ -105,7 +105,7 @@ class Danbooru(BaseBoard):
         url = raw_post.get("file_url") or raw_post.get("large_file_url")
         
         if not url:
-            logger.debug(f"[{raw_post.get('id')}] 缺少URL，跳过")
+            logger.warning(f"[{raw_post.get('id')}] 缺少URL，跳过")
             return None
 
         created_at = raw_post.get("created_at", "")
@@ -121,7 +121,7 @@ class Danbooru(BaseBoard):
         raw_rating = raw_post.get("rating") or ""
         formatted_rating = rating_map.get(raw_rating, raw_rating)
 
-        logger.debug(f"[{raw_post.get('id')}] 转换: {formatted_rating} {raw_post.get('image_width')}x{raw_post.get('image_height')}")
+        # logger.debug(f"[{raw_post.get('id')}] 转换: {formatted_rating} {raw_post.get('image_width')}x{raw_post.get('image_height')}")
         
         return ImageItem(
             id=raw_post.get("id"),
