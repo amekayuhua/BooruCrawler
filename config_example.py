@@ -69,6 +69,9 @@ DATA_OUTPUT_PATH = "data_output_path"
 # 下载图片
 DOWNLOAD_IMAGES = True # bool
 
+# 下载视频
+DOWNLOAD_VIDEOS = True # bool
+
 # 图片文件夹保存地址
 IMAGES_OUTPUT_PATH = "images_output_path" 
 
@@ -80,3 +83,6 @@ DATABASE_PATH = "database_path"
 
 # 是否生成词云图
 WORDCLOUD = True # bool
+
+# 日志选项
+LOG_LEVEL = "INFO" # "DEBUG", "INFO", "WARNING", "ERROR"
